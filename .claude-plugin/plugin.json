@@ -1,0 +1,1 @@
+{ "name": "token-ledger", "version": "0.1.0", "description": "Measures what each plugin costs per request, counts which ones you actually use, and suggests turning off the idle ones. It only suggests; it changes nothing.", "types": "./types/index.d.ts" }

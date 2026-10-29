@@ -1,0 +1,5 @@
+{
+  "name": "who-ate-my-tokens",
+  "owner": { "name": "leonwcl95" },
+  "plugins": [{ "name": "token-ledger", "source": "./" }]
+}
