@@ -1,16 +1,28 @@
 # who-ate-my-tokens
 
-A Claude Code mod that shows what each of your plugins costs on every request, counts which ones you actually use, and suggests turning off the idle ones. The plugin itself is called `token-ledger`; `who-ate-my-tokens` is the repository and marketplace name.
+A Claude Code mod that shows where your tokens and plan usage go: your 5-hour and weekly limits, what fills the context window, what each turn did to the prompt cache and to your plan, the largest tool results, and what each plugin costs on every request. The plugin itself is called `token-ledger`; `who-ate-my-tokens` is the repository and marketplace name.
 
-It only measures and suggests. It never turns anything off.
+It measures. It does not cut anything by itself. Any saving comes from what you do with the numbers, for example `/compact`, a narrower file read, or turning a plugin off.
 
 ## What it does
 
-1. **Cost per plugin.** For every plugin that adds skills or MCP tools, it estimates how many tokens that plugin adds to each request: the size of its skill listing plus the size of its MCP tool schemas. The figures are estimates from Claude Code's own `/context` breakdown, read locally with no model call.
-2. **Usage counts.** It counts each time a skill or MCP tool of a plugin runs, and remembers the counts between sessions.
-3. **Suggestions.** Once it has watched for 7 days, any measured plugin with zero recorded uses is listed as idle, with the tokens per request you would drop by turning it off.
-4. **Status line.** After every turn it shows context size and the total plugin cost, for example `ctx 45k (23%) · plugins ~6.1k/request`.
-5. **Pane.** `/token-ledger` opens a pane with the table above and the suggestion card.
+Open `/token-ledger` for a pane with three tabs.
+
+**Overview**
+- **Plan usage.** Your 5-hour and weekly windows as bars, with the percentage and when each resets. Green, then yellow from 60%, red from 85%. This needs a subscription plan and one finished response.
+- **Where the context goes.** What sits in the window now (system prompt, tools, MCP, memory files, skills, messages), each as a share of the total. Tool schemas that load only on demand are left out of the bars and mentioned in one line.
+- **A hint to compact.** When messages are 60% or more of the window and the window holds over 80k tokens, a yellow card says so and suggests `/compact` or `/clear`.
+
+**Activity**
+- **Last turns.** Per turn: new tokens, tokens read from the prompt cache, tokens written to it, output, and how far the turn moved your 5-hour window. A yellow row means the cache was cold: more written than read.
+- **Biggest tool results.** The largest tool results this session, with the turn they came in (`T3`), an estimated size, and what they were (a file name and line range for reads).
+
+**Plugins**
+- **Cost per plugin.** The estimated tokens each plugin adds to every request (its skill listing plus its MCP tool schemas), and how often a skill or MCP tool of it ran.
+- **Turn off / back on.** A button on each row flips that plugin's flag in `~/.claude/settings.json`. A green card keeps what you turned off, with the plugins' per-request total before and after (once `/reload-plugins` has run) and a button to turn it back on.
+- **Idle suggestion.** After 7 days of tracking, a plugin with zero recorded uses is listed as idle. This only suggests.
+
+Also: the status line shows context size, plugin cost and your plan percentages after every turn, for example `ctx 45k (23%) · plugins ~4.1k/request · 5h 13% · wk 27%`. A toast appears the first time a plan window passes 80% and again at 95%.
 
 ## Install
 
@@ -32,20 +44,22 @@ In the desktop app, where `/plugin` does not run: click **+** next to the prompt
 
 To try it from a folder without installing, start Claude with `claude --plugin-dir <path to this folder>`.
 
+To update an installed copy, refresh the marketplace and press **Update**, then run `/reload-plugins`. Updates show up only when the `version` in `plugin.json` changes.
+
 ## Use
 
-- Work as usual. The status line fills in after your first finished turn.
-- Run `/token-ledger` to see the table.
-- Nothing is suggested for the first 7 days, because it cannot judge "idle" on less history than that.
-- To act on a suggestion, turn the plugin off yourself, for example with `/plugin` or with the [skill-gate](https://github.com/leonwcl95/skillz-please) pane.
+- Work as usual. The pane and status line fill in after your first finished turn.
+- Run `/token-ledger` to open the pane.
+- Turning a plugin off applies after `/reload-plugins`.
+- Nothing is suggested as idle for the first 7 days.
 
-## Read this before turning anything off
+## Read this before trusting it
 
-It only sees skill and MCP-tool use. A plugin that works through hooks, commands or agents can look idle while doing real work. The numbers are estimates. See [LIMITATIONS.md](LIMITATIONS.md).
+The numbers are estimates, and the per-turn plan movement can include other sessions on the same plan. Turning a plugin off only sees skill and MCP-tool use; a plugin that works through hooks, commands or agents can look idle while doing real work. See [LIMITATIONS.md](LIMITATIONS.md).
 
 ## More
 
-- [HOW_IT_WORKS.md](HOW_IT_WORKS.md): the events used, how cost and idleness are worked out, and what is stored.
+- [HOW_IT_WORKS.md](HOW_IT_WORKS.md): the events used, where each number comes from, and what is stored or changed.
 - [LIMITATIONS.md](LIMITATIONS.md): what the numbers mean and what is not covered or tested.
 
 ## License
